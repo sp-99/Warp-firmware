@@ -543,6 +543,7 @@ warpDisableSPIpins(void)
 void
 warpDeasserAllSPIchipSelects(void)
 {
+	return; /* TODO:Remove */
 	/*
 	 *	By default, assusme pins are currently disabled (e.g., by a recent lowPowerPinStates())
 	 *
@@ -835,6 +836,7 @@ disableTPS62740(void)
 void
 enableTPS62740(uint16_t voltageMillivolts)
 {
+	return; /* TODO:Remove  */
 	#if (!WARP_BUILD_ENABLE_GLAUX_VARIANT)
 		/*
 		 *	By default, assusme pins are currently disabled (e.g., by a recent lowPowerPinStates())

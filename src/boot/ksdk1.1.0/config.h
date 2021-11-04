@@ -135,7 +135,7 @@ typedef enum
 	 */
 	kWarpDefaultI2cBaudRateKbps				= 200,
 	kWarpDefaultUartBaudRateBps				= 115200,
-	kWarpDefaultSpiBaudRateKbps				= 10000,
+	kWarpDefaultSpiBaudRateKbps				= 5000,
 
 	/*
 	 *	Times
@@ -184,4 +184,5 @@ typedef enum
 	kWarpDefaultSupplyVoltageMillivoltsISL23415		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsAT45DB		= 1800,
 	kWarpDefaultSupplyVoltageMillivoltsICE40		= 1800,
+	kWarpDefaultSupplyVoltageMillivoltsSSD1331		= 3300,
 } WarpDefaults;
