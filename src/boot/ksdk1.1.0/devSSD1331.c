@@ -22,11 +22,11 @@ volatile uint8_t	payloadBytes[1];
  */
 enum
 {
-	kSSD1331PinMOSI		= GPIO_MAKE_PIN(HW_GPIOA, 8),
-	kSSD1331PinSCK		= GPIO_MAKE_PIN(HW_GPIOA, 9),
-	kSSD1331PinCSn		= GPIO_MAKE_PIN(HW_GPIOB, 11),
-	kSSD1331PinDC		= GPIO_MAKE_PIN(HW_GPIOA, 12),
-	kSSD1331PinRST		= GPIO_MAKE_PIN(HW_GPIOB, 0),
+	kSSD1331PinMOSI		= GPIO_MAKE_PIN(HW_GPIOA, 7),
+	kSSD1331PinSCK		= GPIO_MAKE_PIN(HW_GPIOB, 0),
+	kSSD1331PinCSn		= GPIO_MAKE_PIN(HW_GPIOB, 10),
+	kSSD1331PinDC		= GPIO_MAKE_PIN(HW_GPIOA, 5),
+	kSSD1331PinRST		= GPIO_MAKE_PIN(HW_GPIOB, 11),
 };
 
 
@@ -58,12 +58,7 @@ writeOLED(uint8_t commandByte)
 	 *	Drive /CS high
 	 */
 	GPIO_DRV_SetPinOutput(kSSD1331PinCSn);
-
-	// char status_string[10];
-
-	// sprintf(status_string, "SPI: [%d]\r\n", (int) status);
-
-	// SEGGER_RTT_WriteString(0, status_string);
+	OSA_TimeDelay(10);
 
 	return status;
 }
@@ -106,10 +101,10 @@ devSSD1331init(void)
 	/*
 	 *	Override Warp firmware's use of these pins.
 	 *
-	 *	Re-configure SPI to be on PTA8 and PTA9 for MOSI and SCK respectively.
+	 *	Re-configure SPI to be on PTA7 and PTB0 for MOSI and SCK respectively.
 	 */
-	PORT_HAL_SetMuxMode(PORTA_BASE, 8u, kPortMuxAlt3);
-	PORT_HAL_SetMuxMode(PORTA_BASE, 9u, kPortMuxAlt3);
+	PORT_HAL_SetMuxMode(PORTA_BASE, 7u, kPortMuxAlt3);
+	PORT_HAL_SetMuxMode(PORTB_BASE, 0u, kPortMuxAlt3);
 
 	warpEnableSPIpins();
 
@@ -117,12 +112,12 @@ devSSD1331init(void)
 	 *	Override Warp firmware's use of these pins.
 	 *
 	 *	Reconfigure to use as GPIO.
+	 *
+	 *  D/C PTA5, Reset PTB11, CS PTB10
 	 */
+	PORT_HAL_SetMuxMode(PORTA_BASE, 5u, kPortMuxAsGpio);
 	PORT_HAL_SetMuxMode(PORTB_BASE, 11u, kPortMuxAsGpio);
-	PORT_HAL_SetMuxMode(PORTA_BASE, 12u, kPortMuxAsGpio);
-	PORT_HAL_SetMuxMode(PORTB_BASE, 0u, kPortMuxAsGpio);
-
-
+	PORT_HAL_SetMuxMode(PORTB_BASE, 10u, kPortMuxAsGpio);
 
 
 	/*
@@ -139,41 +134,41 @@ devSSD1331init(void)
 	 *	Initialization sequence, borrowed from https://github.com/adafruit/Adafruit-SSD1331-OLED-Driver-Library-for-Arduino
 	 */
 	writeCommand(kSSD1331CommandDISPLAYOFF);	// 0xAE
-	writeCommand(kSSD1331CommandSETREMAP);		// 0xA0
-	writeCommand(0x72);				// RGB Color 01110010
-	writeCommand(kSSD1331CommandSTARTLINE);		// 0xA1
-	writeCommand(0x0);
-	writeCommand(kSSD1331CommandDISPLAYOFFSET);	// 0xA2
-	writeCommand(0x0);
-	writeCommand(kSSD1331CommandNORMALDISPLAY);	// 0xA4
-	writeCommand(kSSD1331CommandSETMULTIPLEX);	// 0xA8
-	writeCommand(0x3F);				// 0x3F 1/64 duty
-	writeCommand(kSSD1331CommandSETMASTER);		// 0xAD
-	writeCommand(0x8E);
-	writeCommand(kSSD1331CommandPOWERMODE);		// 0xB0
-	writeCommand(0x0B); // disable power save mode
-	writeCommand(kSSD1331CommandPRECHARGE);		// 0xB1
-	writeCommand(0x31);
-	writeCommand(kSSD1331CommandCLOCKDIV);		// 0xB3
-	writeCommand(0xF0);				// 7:4 = Oscillator Frequency, 3:0 = CLK Div Ratio (A[3:0]+1 = 1..16)
-	writeCommand(kSSD1331CommandPRECHARGEA);	// 0x8A
-	writeCommand(0x64);
-	writeCommand(kSSD1331CommandPRECHARGEB);	// 0x8B
-	writeCommand(0x78);
-	writeCommand(kSSD1331CommandPRECHARGEA);	// 0x8C
-	writeCommand(0x64);
-	writeCommand(kSSD1331CommandPRECHARGELEVEL);	// 0xBB
-	writeCommand(0x3A);
-	writeCommand(kSSD1331CommandVCOMH);		// 0xBE
-	writeCommand(0x3E);
-	writeCommand(kSSD1331CommandMASTERCURRENT);	// 0x87
-	writeCommand(0x06);
-	writeCommand(kSSD1331CommandCONTRASTA);		// 0x81
-	writeCommand(0x91);
-	writeCommand(kSSD1331CommandCONTRASTB);		// 0x82
-	writeCommand(0x50);
-	writeCommand(kSSD1331CommandCONTRASTC);		// 0x83
-	writeCommand(0x7D);
+	// writeCommand(kSSD1331CommandSETREMAP);		// 0xA0
+	// writeCommand(0x72);				// RGB Color 01110010
+	// writeCommand(kSSD1331CommandSTARTLINE);		// 0xA1
+	// writeCommand(0x0);
+	// writeCommand(kSSD1331CommandDISPLAYOFFSET);	// 0xA2
+	// writeCommand(0x0);
+	// writeCommand(kSSD1331CommandNORMALDISPLAY);	// 0xA4
+	// writeCommand(kSSD1331CommandSETMULTIPLEX);	// 0xA8
+	// writeCommand(0x3F);				// 0x3F 1/64 duty
+	// writeCommand(kSSD1331CommandSETMASTER);		// 0xAD
+	// writeCommand(0x8E);
+	// writeCommand(kSSD1331CommandPOWERMODE);		// 0xB0
+	// writeCommand(0x0B); // disable power save mode
+	// writeCommand(kSSD1331CommandPRECHARGE);		// 0xB1
+	// writeCommand(0x31);
+	// writeCommand(kSSD1331CommandCLOCKDIV);		// 0xB3
+	// writeCommand(0xF0);				// 7:4 = Oscillator Frequency, 3:0 = CLK Div Ratio (A[3:0]+1 = 1..16)
+	// writeCommand(kSSD1331CommandPRECHARGEA);	// 0x8A
+	// writeCommand(0x64);
+	// writeCommand(kSSD1331CommandPRECHARGEB);	// 0x8B
+	// writeCommand(0x78);
+	// writeCommand(kSSD1331CommandPRECHARGEA);	// 0x8C
+	// writeCommand(0x64);
+	// writeCommand(kSSD1331CommandPRECHARGELEVEL);	// 0xBB
+	// writeCommand(0x3A);
+	// writeCommand(kSSD1331CommandVCOMH);		// 0xBE
+	// writeCommand(0x3E);
+	// writeCommand(kSSD1331CommandMASTERCURRENT);	// 0x87
+	// writeCommand(0x06);
+	// // writeCommand(kSSD1331CommandCONTRASTA);		// 0x81
+	// // writeCommand(0x91);
+	// // writeCommand(kSSD1331CommandCONTRASTB);		// 0x82
+	// // writeCommand(0x50);
+	// // writeCommand(kSSD1331CommandCONTRASTC);		// 0x83
+	// // writeCommand(0x7D);
 	// writeCommand(kSSD1331CommandCONTRASTA);		// 0x81
 	// writeCommand(0x80);
 	// writeCommand(kSSD1331CommandCONTRASTB);		// 0x82
@@ -182,18 +177,17 @@ devSSD1331init(void)
 	// writeCommand(0x80);
 
 
-	writeCommand(kSSD1331CommandSETCOLUMN);		// 0x15
-	writeCommand(0x00);
-	writeCommand(0x5F);
+	// writeCommand(kSSD1331CommandSETCOLUMN);		// 0x15
+	// writeCommand(0x00);
+	// writeCommand(0x5F);
 
-	writeCommand(kSSD1331CommandSETROW);		// 0x75
-	writeCommand(0x00);
-	writeCommand(0x3F);
+	// writeCommand(kSSD1331CommandSETROW);		// 0x75
+	// writeCommand(0x00);
+	// writeCommand(0x3F);
 
 	writeCommand(kSSD1331CommandDISPLAYON);		// Turn on oled panel 0xAF
 
 
-	writeCommand(kSSD1331CommandDISPLAYALLON);
 	
 
 
@@ -236,7 +230,7 @@ devSSD1331init(void)
 
 	// writeCommand(kSSD1331CommandDISPLAYALLOFF);
 
-	// writeCommand(kSSD1331CommandDISPLAYALLON);
+	writeCommand(kSSD1331CommandDISPLAYALLON);
 
 
 	// writeCommand(0xBC);
