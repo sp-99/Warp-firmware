@@ -56,7 +56,7 @@
 #include "warp.h"
 
 
-#define WARP_FRDMKL03
+//#define WARP_FRDMKL03
 
 
 /*
@@ -71,7 +71,6 @@
 #	include "devBME680.h"
 #	include "devCCS811.h"
 #	include "devAMG8834.h"
-#	include "devSSD1331.h"
 //#	include "devMAX11300.h"
 //#include "devTCS34725.h"
 //#include "devSI4705.h"
@@ -1249,7 +1248,7 @@ main(void)
 #endif
 
 #ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
-	initMMA8451Q(	0x1D	/* i2cAddress */,	&deviceMMA8451QState	);
+	initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState	);
 #endif
 
 #ifdef WARP_BUILD_ENABLE_DEVLPS25H
@@ -1354,9 +1353,6 @@ main(void)
 	 *	Notreached
 	 */
 #endif
-
-	/* ADDED OLED INIT */
-	devSSD1331init();
 
 	while (1)
 	{
