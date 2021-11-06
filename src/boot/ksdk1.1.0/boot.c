@@ -176,6 +176,10 @@
 	volatile WarpUARTDeviceState			deviceBGXState;
 #endif
 
+#if (WARP_BUILD_ENABLE_DEVSSD1331)
+	#include "devSSD1331.h"
+#endif
+
 
 volatile i2c_master_state_t				i2cMasterState;
 volatile spi_master_state_t				spiMasterState;
@@ -1606,7 +1610,7 @@ main(void)
 
 	#if (WARP_BUILD_ENABLE_DEVMMA8451Q)
 //		initMMA8451Q(	0x1C	/* i2cAddress */,	&deviceMMA8451QState,		kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
-		initMMA8451Q(	0x1C	/* i2cAddress */,		kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
+		initMMA8451Q(	0x1D	/* i2cAddress */,		kWarpDefaultSupplyVoltageMillivoltsMMA8451Q	);
 	#endif
 
 	#if (WARP_BUILD_ENABLE_DEVLPS25H)
@@ -2016,6 +2020,14 @@ main(void)
 			warpPrint("Should not get here...");
 		}
 	#endif
+
+	/* SP ADDED OLED INIT */
+	devSSD1331init();
+	devSSD1331fill(kSSD1331ColourGreen);
+
+	// devSSD1331fill(kSSD1331ColourRed);
+
+	// devSSD1331fill(kSSD1331ColourBlue);
 
 	while (1)
 	{
