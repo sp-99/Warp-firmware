@@ -38,6 +38,7 @@ warp:
 	cp src/boot/ksdk1.1.0/devAS726x.*				build/ksdk1.1/work/demos/Warp/src/
 	cp src/boot/ksdk1.1.0/devRV8803C7.*				build/ksdk1.1/work/demos/Warp/src/
 	cp src/boot/ksdk1.1.0/devBGX.*					build/ksdk1.1/work/demos/Warp/src/
+	cp src/boot/ksdk1.1.0/devINA219.*				build/ksdk1.1/work/demos/Warp/src/
 	cp src/boot/ksdk1.1.0/devISL23415.*				build/ksdk1.1/work/demos/Warp/src/
 	cp src/boot/ksdk1.1.0/devIS25xP.*				build/ksdk1.1/work/demos/Warp/src/
 	cp src/boot/ksdk1.1.0/devAT45DB.*				build/ksdk1.1/work/demos/Warp/src/

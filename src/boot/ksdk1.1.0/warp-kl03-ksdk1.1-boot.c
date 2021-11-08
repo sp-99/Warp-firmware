@@ -71,6 +71,7 @@
 #	include "devBME680.h"
 #	include "devCCS811.h"
 #	include "devAMG8834.h"
+#	include "devINA219.h"
 //#	include "devMAX11300.h"
 //#include "devTCS34725.h"
 //#include "devSI4705.h"
@@ -114,6 +115,10 @@ volatile WarpSPIDeviceState			deviceISL23415State;
 volatile WarpI2CDeviceState			deviceBMX055accelState;
 volatile WarpI2CDeviceState			deviceBMX055gyroState;
 volatile WarpI2CDeviceState			deviceBMX055magState;
+#endif
+
+#ifdef WARP_BUILD_ENABLE_DEVINA219
+volatile WarpI2CDeviceState			deviceINA219State;
 #endif
 
 #ifdef WARP_BUILD_ENABLE_DEVMMA8451Q
