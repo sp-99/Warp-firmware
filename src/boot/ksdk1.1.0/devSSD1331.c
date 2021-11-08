@@ -120,24 +120,30 @@ devSSD1331init(void)
 	writeCommand(0x31);
 	writeCommand(kSSD1331CommandCLOCKDIV);		// 0xB3
 	writeCommand(0xF0);				// 7:4 = Oscillator Frequency, 3:0 = CLK Div Ratio (A[3:0]+1 = 1..16)
+	
+	/* HW manual states pre charge values should match contrast values (modified below) */
 	writeCommand(kSSD1331CommandPRECHARGEA);	// 0x8A
-	writeCommand(0x64);
+	writeCommand(0xFF);
 	writeCommand(kSSD1331CommandPRECHARGEB);	// 0x8B
-	writeCommand(0x78);
+	writeCommand(0xFF);
 	writeCommand(kSSD1331CommandPRECHARGEA);	// 0x8C
-	writeCommand(0x64);
+	writeCommand(0xFF);
 	writeCommand(kSSD1331CommandPRECHARGELEVEL);	// 0xBB
 	writeCommand(0x3A);
 	writeCommand(kSSD1331CommandVCOMH);		// 0xBE
 	writeCommand(0x3E);
+
+	/* Change master current scaling factor to achieve max. brightness (16d) as per HW manual */
 	writeCommand(kSSD1331CommandMASTERCURRENT);	// 0x87
-	writeCommand(0x06);
+	writeCommand(0x0F);
+
+	/* Set all contrast values to max. to achieve max. brightness */
 	writeCommand(kSSD1331CommandCONTRASTA);		// 0x81
-	writeCommand(0x91);
+	writeCommand(0xFF);
 	writeCommand(kSSD1331CommandCONTRASTB);		// 0x82
-	writeCommand(0x50);
+	writeCommand(0xFF);
 	writeCommand(kSSD1331CommandCONTRASTC);		// 0x83
-	writeCommand(0x7D);
+	writeCommand(0xFF);
 	writeCommand(kSSD1331CommandDISPLAYON);		// Turn on oled panel
 
 	/*
@@ -155,13 +161,6 @@ devSSD1331init(void)
 	writeCommand(0x5F);
 	writeCommand(0x3F);
 
-	/*
-	 *	Any post-initialization drawing commands go here.
-	 */
-	//...
-
-
-
 	return 0;
 }
 
@@ -176,6 +175,7 @@ devSSD1331fill(SSD1331Colours colour)
 	writeCommand(0x00);
 	writeCommand(0x00);
 
+	/* other corner opposite to fill screen */
 	writeCommand(DEVSSD1331_WIDTH);
 	writeCommand(DEVSSD1331_HEIGHT);
 
