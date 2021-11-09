@@ -133,7 +133,7 @@ devSSD1331init(void)
 	writeCommand(kSSD1331CommandVCOMH);		// 0xBE
 	writeCommand(0x3E);
 
-	/* Change master current scaling factor to achieve max. brightness (16d) as per HW manual */
+	/* Change master current scaling factor to achieve max. brightness (0x0F) as per HW manual */
 	writeCommand(kSSD1331CommandMASTERCURRENT);	// 0x87
 	writeCommand(0x0F);
 
