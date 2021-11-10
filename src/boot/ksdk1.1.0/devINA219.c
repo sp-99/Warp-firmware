@@ -256,7 +256,7 @@ printSensorDataINA219(int meas_reads)
 	}
 	else
 	{
-		warpPrint("Shunt: 0x%04x, %dmV\r\n", readSensorRegisterValue, readSensorRegisterValue / 100);
+		warpPrint("\r\nShunt: 0x%04x, %duV\r\n", readSensorRegisterValue, readSensorRegisterValue * 10);
 	}
 
 	i2cReadStatus = readSensorRegisterINA219(kWarpSensorOutputRegisterINA219OUT_BUS_V, 2 /* numberOfBytes */);
@@ -268,7 +268,7 @@ printSensorDataINA219(int meas_reads)
 	}
 	else
 	{
-		warpPrint("Bus: 0x%04x, %dmV\r\n", readSensorRegisterValue, (readSensorRegisterValue >> 2) * 2);
+		warpPrint("Bus: 0x%04x, %dmV\r\n", readSensorRegisterValue, (readSensorRegisterValue >> 3) * 4);
 	}
 
 
