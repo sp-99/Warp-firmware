@@ -3025,6 +3025,9 @@ loopForSensor(	const char *  tagString,
 	int			nBadCommands = 0;
 	uint16_t		actualSssupplyMillivolts = sssupplyMillivolts;
 
+	//TODO:SP remove
+	printSensorDataINA219();
+
 
 	if (	(!spiDeviceState && !i2cDeviceState) ||
 		(spiDeviceState && i2cDeviceState) )

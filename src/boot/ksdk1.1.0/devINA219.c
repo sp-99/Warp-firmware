@@ -72,10 +72,13 @@ initINA219(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 	deviceINA219State.i2cAddress			= i2cAddress;
 	deviceINA219State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
-	/* 13: 16V, 12/11: default, 10-7: default, 6-3: default, default */
-	uint16_t payload_conf = 0b0001100110011111;
+	/* 13: 16V, 12/11: gain 1, 10-7: default, 6-3: default, default */
+	uint16_t payload_conf = 0b0000000110011111;
 
-	WarpStatus init_status = configureSensorINA219(payload_conf);
+	// uint16_t payload_cal = 20480u;
+	uint16_t payload_cal = 0xFFFF;
+
+	WarpStatus init_status = configureSensorINA219(payload_conf, payload_cal);
 
 	warpPrint("init status INA219: %d", (int) init_status);
 	return;
@@ -139,13 +142,26 @@ writeSensorRegisterINA219(uint8_t deviceRegister, uint16_t payload)
 }
 
 WarpStatus
-configureSensorINA219(uint16_t payload_conf)
+configureSensorINA219(uint16_t payload_conf, uint16_t payload_cal)
 {
+	WarpStatus status1, status2;
+
 	warpScaleSupplyVoltage(deviceINA219State.operatingVoltageMillivolts);
 
-	return writeSensorRegisterINA219(kWarpSensorConfigurationRegisterINA219F_CONF /* register address F_SETUP */,
-							payload_conf /* payload: Disable FIFO */
+	status1 = writeSensorRegisterINA219(kWarpSensorConfigurationRegisterINA219F_CONF /* register address */,
+							payload_conf
 							);
+
+	status2 = writeSensorRegisterINA219(kWarpSensorConfigurationRegisterINA219F_CALIB /* register address */,
+							payload_cal
+							);
+
+	if (status1 + status2 > 0)
+	{
+		return kWarpStatusCommsError;
+	}
+
+	return kWarpStatusOK;
 }
 
 WarpStatus
@@ -200,104 +216,71 @@ readSensorRegisterINA219(uint8_t deviceRegister, int numberOfBytes)
 	return kWarpStatusOK;
 }
 
-// void
-// printSensorDataINA219(bool hexModeFlag)
-// {
-// 	uint16_t	readSensorRegisterValueLSB;
-// 	uint16_t	readSensorRegisterValueMSB;
-// 	int16_t		readSensorRegisterValueCombined;
-// 	WarpStatus	i2cReadStatus;
+void
+printSensorDataINA219()
+{
+	WarpStatus	i2cReadStatus;
+	uint16_t readSensorRegisterValue;
+
+	warpScaleSupplyVoltage(deviceINA219State.operatingVoltageMillivolts);
 
 
-// 	warpScaleSupplyVoltage(deviceINA219State.operatingVoltageMillivolts);
 
-// 	/*
-// 	 *	From the INA219 datasheet:
-// 	 *
-// 	 *		"A random read access to the LSB registers is not possible.
-// 	 *		Reading the MSB register and then the LSB register in sequence
-// 	 *		ensures that both bytes (LSB and MSB) belong to the same data
-// 	 *		sample, even if a new data sample arrives between reading the
-// 	 *		MSB and the LSB byte."
-// 	 *
-// 	 *	We therefore do 2-byte read transactions, for each of the registers.
-// 	 *	We could also improve things by doing a 6-byte read transaction.
-// 	 */
-// 	i2cReadStatus = readSensorRegisterINA219(kWarpSensorOutputRegisterINA219OUT_X_MSB, 2 /* numberOfBytes */);
-// 	readSensorRegisterValueMSB = deviceINA219State.i2cBuffer[0];
-// 	readSensorRegisterValueLSB = deviceINA219State.i2cBuffer[1];
-// 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 6) | (readSensorRegisterValueLSB >> 2);
+	// kWarpSensorOutputRegisterINA219OUT_SHUNT_V
+	// kWarpSensorOutputRegisterINA219OUT_BUS_V
+	// kWarpSensorOutputRegisterINA219OUT_POWER
+	// kWarpSensorOutputRegisterINA219OUT_CURRENT
 
-// 	/*
-// 	 *	Sign extend the 14-bit value based on knowledge that upper 2 bit are 0:
-// 	 */
-// 	readSensorRegisterValueCombined = (readSensorRegisterValueCombined ^ (1 << 13)) - (1 << 13);
+	i2cReadStatus = readSensorRegisterINA219(kWarpSensorOutputRegisterINA219OUT_SHUNT_V, 2 /* numberOfBytes */);
+	readSensorRegisterValue = (deviceINA219State.i2cBuffer[0] << 8) | deviceINA219State.i2cBuffer[1];
 
-// 	if (i2cReadStatus != kWarpStatusOK)
-// 	{
-// 		warpPrint(" ----,");
-// 	}
-// 	else
-// 	{
-// 		if (hexModeFlag)
-// 		{
-// 			warpPrint(" 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
-// 		}
-// 		else
-// 		{
-// 			warpPrint(" %d,", readSensorRegisterValueCombined);
-// 		}
-// 	}
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		warpPrint(" ----,");
+	}
+	else
+	{
+		warpPrint("Shunt: 0x%04x, %dmV\r\n", readSensorRegisterValue, readSensorRegisterValue / 100);
+	}
 
-// 	i2cReadStatus = readSensorRegisterINA219(kWarpSensorOutputRegisterINA219OUT_Y_MSB, 2 /* numberOfBytes */);
-// 	readSensorRegisterValueMSB = deviceINA219State.i2cBuffer[0];
-// 	readSensorRegisterValueLSB = deviceINA219State.i2cBuffer[1];
-// 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 6) | (readSensorRegisterValueLSB >> 2);
+	i2cReadStatus = readSensorRegisterINA219(kWarpSensorOutputRegisterINA219OUT_BUS_V, 2 /* numberOfBytes */);
+	readSensorRegisterValue = (deviceINA219State.i2cBuffer[0] << 8) | deviceINA219State.i2cBuffer[1];
 
-// 	/*
-// 	 *	Sign extend the 14-bit value based on knowledge that upper 2 bit are 0:
-// 	 */
-// 	readSensorRegisterValueCombined = (readSensorRegisterValueCombined ^ (1 << 13)) - (1 << 13);
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		warpPrint(" ----,");
+	}
+	else
+	{
+		warpPrint("Bus: 0x%04x, %dmV\r\n", readSensorRegisterValue, (readSensorRegisterValue >> 2) * 2);
+	}
 
-// 	if (i2cReadStatus != kWarpStatusOK)
-// 	{
-// 		warpPrint(" ----,");
-// 	}
-// 	else
-// 	{
-// 		if (hexModeFlag)
-// 		{
-// 			warpPrint(" 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
-// 		}
-// 		else
-// 		{
-// 			warpPrint(" %d,", readSensorRegisterValueCombined);
-// 		}
-// 	}
+	i2cReadStatus = readSensorRegisterINA219(kWarpSensorOutputRegisterINA219OUT_CURRENT, 2 /* numberOfBytes */);
+	readSensorRegisterValue = (deviceINA219State.i2cBuffer[0] << 8) | deviceINA219State.i2cBuffer[1];
 
-// 	i2cReadStatus = readSensorRegisterINA219(kWarpSensorOutputRegisterINA219OUT_Z_MSB, 2 /* numberOfBytes */);
-// 	readSensorRegisterValueMSB = deviceINA219State.i2cBuffer[0];
-// 	readSensorRegisterValueLSB = deviceINA219State.i2cBuffer[1];
-// 	readSensorRegisterValueCombined = ((readSensorRegisterValueMSB & 0xFF) << 6) | (readSensorRegisterValueLSB >> 2);
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		warpPrint(" ----,");
+	}
+	else
+	{
+		/* LSB = 6.25uA */
+		warpPrint("Current: 0x%04x, %duA\r\n", readSensorRegisterValue, (readSensorRegisterValue * 6250)/1000);
+	}
 
-// 	/*
-// 	 *	Sign extend the 14-bit value based on knowledge that upper 2 bit are 0:
-// 	 */
-// 	readSensorRegisterValueCombined = (readSensorRegisterValueCombined ^ (1 << 13)) - (1 << 13);
+	i2cReadStatus = readSensorRegisterINA219(kWarpSensorOutputRegisterINA219OUT_POWER, 2 /* numberOfBytes */);
+	readSensorRegisterValue = (deviceINA219State.i2cBuffer[0] << 8) | deviceINA219State.i2cBuffer[1];
 
-// 	if (i2cReadStatus != kWarpStatusOK)
-// 	{
-// 		warpPrint(" ----,");
-// 	}
-// 	else
-// 	{
-// 		if (hexModeFlag)
-// 		{
-// 			warpPrint(" 0x%02x 0x%02x,", readSensorRegisterValueMSB, readSensorRegisterValueLSB);
-// 		}
-// 		else
-// 		{
-// 			warpPrint(" %d,", readSensorRegisterValueCombined);
-// 		}
-// 	}
-// }
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		warpPrint(" ----,");
+	}
+	else
+	{
+		/* LSB = 400uW */
+		warpPrint("Power: 0x%04x, %duW\r\n", readSensorRegisterValue, (readSensorRegisterValue * 12500)/1000);
+	}
+
+
+
+}
