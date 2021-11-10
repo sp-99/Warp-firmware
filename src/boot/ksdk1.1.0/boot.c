@@ -2082,6 +2082,10 @@ main(void)
 			warpPrint("\r- 'v': Enter VLLS0 low-power mode for 3s, then reset\n");
 		#endif
 
+		#if (WARP_BUILD_ENABLE_DEVINA219)
+			warpPrint("\r- 'M': Measure current/power with INA219.\n");
+		#endif
+
 		warpPrint("\r- 'x': disable SWD and spin for 10 secs.\n");
 		warpPrint("\r- 'z': perpetually dump all sensor data.\n");
 
@@ -2790,6 +2794,18 @@ main(void)
 				//xx = read4digits();
 			}
 
+			#if (WARP_BUILD_ENABLE_DEVINA219)
+			case 'M':
+			{
+				int meas_reads;
+
+				warpPrint("\r\n\tNumber of measurement reads (e.g., '0500')> ");
+				meas_reads = read4digits();
+
+				printSensorDataINA219(meas_reads);
+			}
+			#endif
+
 
 			/*
 			 *	Ignore naked returns.
@@ -3024,10 +3040,6 @@ loopForSensor(	const char *  tagString,
 	int			nCorrects = 0;
 	int			nBadCommands = 0;
 	uint16_t		actualSssupplyMillivolts = sssupplyMillivolts;
-
-	//TODO:SP remove
-	printSensorDataINA219();
-
 
 	if (	(!spiDeviceState && !i2cDeviceState) ||
 		(spiDeviceState && i2cDeviceState) )

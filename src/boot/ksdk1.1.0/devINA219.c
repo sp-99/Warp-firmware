@@ -216,8 +216,24 @@ readSensorRegisterINA219(uint8_t deviceRegister, int numberOfBytes)
 	return kWarpStatusOK;
 }
 
+uint8_t
+readyToReadINA219()
+{
+	WarpStatus i2cReadStatus = readSensorRegisterINA219(kWarpSensorOutputRegisterINA219OUT_BUS_V, 2 /* numberOfBytes */);
+	uint16_t readSensorRegisterValue = (deviceINA219State.i2cBuffer[0] << 8) | deviceINA219State.i2cBuffer[1];
+
+	if (i2cReadStatus != kWarpStatusOK)
+	{
+		/* force failure */
+		readSensorRegisterValue = 0;
+	}
+
+	/* b1 is CNVR, conversion ready */
+	return (readSensorRegisterValue & (1 << 1)) > 0;
+}
+
 void
-printSensorDataINA219()
+printSensorDataINA219(int meas_reads)
 {
 	WarpStatus	i2cReadStatus;
 	uint16_t readSensorRegisterValue;
@@ -255,17 +271,44 @@ printSensorDataINA219()
 		warpPrint("Bus: 0x%04x, %dmV\r\n", readSensorRegisterValue, (readSensorRegisterValue >> 2) * 2);
 	}
 
-	i2cReadStatus = readSensorRegisterINA219(kWarpSensorOutputRegisterINA219OUT_CURRENT, 2 /* numberOfBytes */);
-	readSensorRegisterValue = (deviceINA219State.i2cBuffer[0] << 8) | deviceINA219State.i2cBuffer[1];
 
-	if (i2cReadStatus != kWarpStatusOK)
+
+	for (uint16_t meas_count = 0; meas_count < meas_reads; meas_count++)
 	{
-		warpPrint(" ----,");
-	}
-	else
-	{
-		/* LSB = 6.25uA */
-		warpPrint("Current: 0x%04x, %duA\r\n", readSensorRegisterValue, (readSensorRegisterValue * 6250)/1000);
+		while(readyToReadINA219() == 0)
+		{
+			__asm volatile ("nop");
+		}
+
+		warpPrint("Current meas. %d: ", meas_count);
+
+		i2cReadStatus = readSensorRegisterINA219(kWarpSensorOutputRegisterINA219OUT_CURRENT, 2 /* numberOfBytes */);
+		readSensorRegisterValue = (deviceINA219State.i2cBuffer[0] << 8) | deviceINA219State.i2cBuffer[1];
+
+		if (i2cReadStatus != kWarpStatusOK)
+		{
+			warpPrint(" ----,");
+		}
+		else
+		{
+			/* LSB = 6.25uA */
+			warpPrint("Current: 0x%04x, %duA\r\n", readSensorRegisterValue, (readSensorRegisterValue * 6250)/1000);
+		}
+
+
+		/* Read power to reset conversion ready flag */	
+		i2cReadStatus = readSensorRegisterINA219(kWarpSensorOutputRegisterINA219OUT_POWER, 2 /* numberOfBytes */);
+		readSensorRegisterValue = (deviceINA219State.i2cBuffer[0] << 8) | deviceINA219State.i2cBuffer[1];
+
+		if (i2cReadStatus != kWarpStatusOK)
+		{
+			warpPrint(" ----,");
+		}
+		else
+		{
+			/* LSB = 400uW */
+			warpPrint("Power: 0x%04x, %duW\r\n", readSensorRegisterValue, (readSensorRegisterValue * 12500)/1000);
+		}
 	}
 
 	i2cReadStatus = readSensorRegisterINA219(kWarpSensorOutputRegisterINA219OUT_POWER, 2 /* numberOfBytes */);
