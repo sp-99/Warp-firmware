@@ -65,11 +65,10 @@ extern volatile uint32_t		gWarpI2cTimeoutMilliseconds;
 extern volatile uint32_t		gWarpSupplySettlingDelayMilliseconds;
 
 
-
 void
 initINA219(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 {
-	deviceINA219State.i2cAddress			= i2cAddress;
+	deviceINA219State.i2cAddress					= i2cAddress;
 	deviceINA219State.operatingVoltageMillivolts	= operatingVoltageMillivolts;
 
 	/* 13: 16V, 12/11: gain 1, 10-7: default, 6-3: default, default */
@@ -80,7 +79,7 @@ initINA219(const uint8_t i2cAddress, uint16_t operatingVoltageMillivolts)
 
 	WarpStatus init_status = configureSensorINA219(payload_conf, payload_cal);
 
-	warpPrint("init status INA219: %d", (int) init_status);
+	warpPrint("init status INA219: %d\r\n", (int) init_status);
 	return;
 }
 
@@ -112,7 +111,12 @@ writeSensorRegisterINA219(uint8_t deviceRegister, uint16_t payload)
 
 	warpScaleSupplyVoltage(deviceINA219State.operatingVoltageMillivolts);
 	commandByte[0] = deviceRegister;
+
+	/* split 2 byte payload into separate bytes */
+	/* mask off LSBs and shift MSBs to the right, disregarding leading 0s in cast */
 	payloadBytes[0] = (uint8_t) ((payload & 0xFF00) >> 8);
+
+	/* mask off MSBs and disguard leading 0s in cast */
 	payloadBytes[1] = (uint8_t) (payload & 0x00FF);
 	warpEnableI2Cpins();
 
@@ -124,14 +128,6 @@ writeSensorRegisterINA219(uint8_t deviceRegister, uint16_t payload)
 							payloadBytes,
 							2,
 							gWarpI2cTimeoutMilliseconds);
-
-	// uint32_t instance,
- //                                            const i2c_device_t * device,
- //                                            const uint8_t * cmdBuff,
- //                                            uint32_t cmdSize,f
- //                                            const uint8_t * txBuff,
- //                                            uint32_t txSize,
- //                                            uint32_t timeout_ms)
 
 	if (status != kStatus_I2C_Success)
 	{
@@ -240,28 +236,20 @@ printSensorDataINA219(int meas_reads)
 
 	warpScaleSupplyVoltage(deviceINA219State.operatingVoltageMillivolts);
 
-
-
-	// kWarpSensorOutputRegisterINA219OUT_SHUNT_V
-	// kWarpSensorOutputRegisterINA219OUT_BUS_V
-	// kWarpSensorOutputRegisterINA219OUT_POWER
-	// kWarpSensorOutputRegisterINA219OUT_CURRENT
-
-
-
-
-
+	/* repeat measurements for specified number of times */
 	for (uint16_t meas_count = 0; meas_count < meas_reads; meas_count++)
 	{
+		/* wait until device registers are ready */
 		while(readyToReadINA219() == 0)
 		{
+			/* to ensure not optimised out */
 			__asm volatile ("nop");
 		}
 
-
-
+		/* print measurement count */
 		warpPrint("\r\nMeasurement: %d\r\n", meas_count);
 
+		/* read shunt voltage */
 		i2cReadStatus = readSensorRegisterINA219(kWarpSensorOutputRegisterINA219OUT_SHUNT_V, 2 /* numberOfBytes */);
 		readSensorRegisterValue = (deviceINA219State.i2cBuffer[0] << 8) | deviceINA219State.i2cBuffer[1];
 
@@ -274,6 +262,7 @@ printSensorDataINA219(int meas_reads)
 			warpPrint("Shunt: 0x%04x, %duV\r\n", readSensorRegisterValue, readSensorRegisterValue * 10);
 		}
 
+		/* read bus voltage */
 		i2cReadStatus = readSensorRegisterINA219(kWarpSensorOutputRegisterINA219OUT_BUS_V, 2 /* numberOfBytes */);
 		readSensorRegisterValue = (deviceINA219State.i2cBuffer[0] << 8) | deviceINA219State.i2cBuffer[1];
 
@@ -286,6 +275,7 @@ printSensorDataINA219(int meas_reads)
 			warpPrint("Bus: 0x%04x, %dmV\r\n", readSensorRegisterValue, (readSensorRegisterValue >> 3) * 4);
 		}
 
+		/* read current reg. */
 		i2cReadStatus = readSensorRegisterINA219(kWarpSensorOutputRegisterINA219OUT_CURRENT, 2 /* numberOfBytes */);
 		readSensorRegisterValue = (deviceINA219State.i2cBuffer[0] << 8) | deviceINA219State.i2cBuffer[1];
 
@@ -300,7 +290,7 @@ printSensorDataINA219(int meas_reads)
 		}
 
 
-		/* Read power to reset conversion ready flag */	
+		/* read power, which also resets conversion ready flag */	
 		i2cReadStatus = readSensorRegisterINA219(kWarpSensorOutputRegisterINA219OUT_POWER, 2 /* numberOfBytes */);
 		readSensorRegisterValue = (deviceINA219State.i2cBuffer[0] << 8) | deviceINA219State.i2cBuffer[1];
 
